@@ -1,0 +1,61 @@
+{
+  "name": "insteon-adapter",
+  "display_name": "INSTEON",
+  "version": "1.0.0",
+  "description": "INSTEON adapter plugin for Mozilla WebThings Gateway",
+  "author": "James Willcox <snorp@snorp.net>",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint --fix ."
+  },
+  "keywords": [
+    "mozilla",
+    "iot",
+    "adapter",
+    "insteon"
+  ],
+  "homepage": "https://github.com/snorp/insteon-adapter",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/snorp/insteon-adapter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/snorp/insteon-adapter/issues"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.4.0"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "SHA256SUMS",
+    "index.js",
+    "insteon-adapter.js",
+    "insteon-api-handler.js",
+    "manifest.json",
+    "css",
+    "views",
+    "js"
+  ],
+  "moziot": {
+    "api": {
+      "min": 2,
+      "max": 2
+    },
+    "enabled": true,
+    "plugin": true,
+    "exec": "{nodeLoader} {path}",
+    "config": {
+      "devicePath": "/dev/ttyUSB0"
+    }
+  },
+  "dependencies": {
+    "delay": "^4.3.0",
+    "insteon-plm": "file:../insteon-plm",
+    "mkdirp": "^0.5.1",
+    "node-persist": "^3.0.5",
+    "serialport": "^8.0.6"
+  }
+}
