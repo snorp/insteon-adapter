@@ -34,7 +34,9 @@
     "index.js",
     "insteon-adapter.js",
     "insteon-api-handler.js",
+    "insteon-capabilities.js",
     "manifest.json",
+    "package-lock.json",
     "css",
     "views",
     "js"
@@ -53,7 +55,7 @@
   },
   "dependencies": {
     "delay": "^4.3.0",
-    "insteon-plm": "file:../insteon-plm",
+    "insteon-plm": "github:snorp/insteon-plm",
     "mkdirp": "^0.5.1",
     "node-persist": "^3.0.5",
     "serialport": "^8.0.6"
