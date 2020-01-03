@@ -74,12 +74,12 @@ class OnOffProperty extends InsteonProperty {
       this.setCachedValueAndNotify(true);
     } else if (cmd1 === MessageCommands.ON_FAST) {
       this.setCachedValueAndNotify(true);
-      this.device.eventNotify(new Event(this, 'FastOn'));
+      this.device.eventNotify(new Event(this.device, 'FastOn'));
     } else if (cmd1 === MessageCommands.OFF) {
       this.setCachedValueAndNotify(false);
     } else if (cmd1 === MessageCommands.OFF_FAST) {
       this.setCachedValueAndNotify(false);
-      this.device.eventNotify(new Event(this, 'FastOff'));
+      this.device.eventNotify(new Event(this.device, 'FastOff'));
     }
   }
 
