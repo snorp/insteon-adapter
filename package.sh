@@ -17,7 +17,7 @@ else
 fi
 
 rm -f SHA256SUMS
-sha256sum manifest.json package.json *.js LICENSE README.md > SHA256SUMS
+sha256sum manifest.json package.json package-lock.json *.js LICENSE README.md > SHA256SUMS
 find css js views -type f -exec sha256sum {} \; >> SHA256SUMS
 
 rm -rf node_modules/.bin
