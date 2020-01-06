@@ -20,8 +20,12 @@ rm -f SHA256SUMS
 sha256sum manifest.json package.json package-lock.json *.js LICENSE README.md > SHA256SUMS
 find css js views -type f -exec sha256sum {} \; >> SHA256SUMS
 
-rm -rf node_modules/.bin
+# sha256sum both files and symlinks
 find node_modules -type f -exec sha256sum {} \; >> SHA256SUMS
+find node_modules -type l -exec sha256sum {} \; >> SHA256SUMS
+
+# remove the symlinks
+find node_modules -type d -name .bin -exec rm -rf {} \;
 
 TARFILE="$(npm pack)"
 tar xzf ${TARFILE}
