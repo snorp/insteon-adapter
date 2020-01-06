@@ -24,9 +24,6 @@ find css js views -type f -exec sha256sum {} \; >> SHA256SUMS
 find node_modules -type f -exec sha256sum {} \; >> SHA256SUMS
 find node_modules -type l -exec sha256sum {} \; >> SHA256SUMS
 
-# remove the symlinks
-find node_modules -type d -name .bin -exec rm -rf {} \;
-
 TARFILE="$(npm pack)"
 tar xzf ${TARFILE}
 rm ${TARFILE}
