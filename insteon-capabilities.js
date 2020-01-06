@@ -3,7 +3,7 @@
 const CAPABILITIES = {
   0: {
     // Mini remote, 1 scene
-    17: ['OnOffSwitch'],
+    17: ['OnOffSwitch', 'BatteryPowered'],
   },
   1: {
     // Dimmer switches
@@ -14,7 +14,7 @@ const CAPABILITIES = {
     default: ['OnOffSwitch'],
   },
   16: {
-    17: ['DoorSensor'],
+    17: ['DoorSensor', 'BatteryPowered'],
   },
 };
 

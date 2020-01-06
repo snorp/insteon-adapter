@@ -21,6 +21,8 @@ const { findCapabilities } = require('./insteon-capabilities');
 
 const ID_PREFIX = 'insteon-';
 const POLL_INTERVAL_MS = 60 * 60 * 1000;
+const HEARTBEAT_GROUP = 4;
+const LOW_BATTERY_GROUP = 3;
 
 function getDataPath() {
   let profileDir;
@@ -58,13 +60,14 @@ class InsteonProperty extends Property {
 }
 
 class OnOffProperty extends InsteonProperty {
-  constructor(device) {
+  constructor(device, { readOnly = true } = {}) {
     super(device, 'on', {
       '@type': 'OnOffProperty',
       label: 'On/Off',
       name: 'on',
       type: 'boolean',
       value: false,
+      readOnly,
     });
   }
 
@@ -82,6 +85,12 @@ class OnOffProperty extends InsteonProperty {
       this.setCachedValueAndNotify(false);
       this.device.eventNotify(new Event(this.device, 'FastOff'));
     }
+  }
+}
+
+class SettableOnOffProperty extends OnOffProperty {
+  constructor(device) {
+    super(device, { readOnly: false });
   }
 
   async poll() {
@@ -181,14 +190,21 @@ class InsteonDevice extends Device {
     const type = this['@type'] = deviceDescription['@type'] || [];
 
     let isLight = false;
+    let isPollable = false;
     if (type.includes('OnOffSwitch')) {
-      this.properties.set('on', new OnOffProperty(this));
+      if (type.includes('BatteryPowered')) {
+        this.properties.set('on', new OnOffProperty(this));
+      } else {
+        this.properties.set('on', new SettableOnOffProperty(this));
+        isPollable = true;
+      }
       isLight = true;
     }
 
     if (type.includes('MultiLevelSwitch')) {
       this.properties.set('level', new DimmerProperty(this));
       isLight = true;
+      isPollable = true;
 
       this.addAction('Fade', {
         '@type': 'FadeAction',
@@ -197,18 +213,30 @@ class InsteonDevice extends Device {
           required: ['level', 'duration'],
           properties: {
             level: {
-              type: "integer",
-              unit: "percent",
+              type: 'integer',
+              unit: 'percent',
               minimum: 0,
-              maximum: 100
+              maximum: 100,
             },
             duration: {
               type: 'integer',
               unit: 'second',
-              minimum: 0
-            }
-          }
-        }
+              minimum: 0,
+            },
+          },
+        },
+      });
+    }
+
+    if (type.includes('BatteryPowered')) {
+      this.addEvent('Heartbeat', {
+        '@type': 'HeartbeatEvent',
+        description: 'Device checked in',
+      });
+
+      this.addEvent('LowBattery', {
+        '@type': 'LowBatteryEvent',
+        description: 'Device has notified of a low battery',
       });
     }
 
@@ -229,7 +257,13 @@ class InsteonDevice extends Device {
       });
     }
 
-    this.poll();
+    if (isPollable) {
+      this.addAction('Poll', {
+        '@type': 'PollAction',
+      });
+
+      this.poll();
+    }
   }
 
   async performAction(action) {
@@ -243,6 +277,10 @@ class InsteonDevice extends Device {
         }
         break;
       }
+      case 'Poll': {
+        await this.poll();
+        break;
+      }
       default:
         console.warn(`Unknown action ${action.name}`);
         break;
@@ -253,9 +291,22 @@ class InsteonDevice extends Device {
     return this._address;
   }
 
+  get isBatteryPowered() {
+    return this['@type'].includes('BatteryPowered');
+  }
+
   async handleMessage(message) {
     for (const prop of this.properties.values()) {
       await prop.handleMessage(message);
+    }
+
+    if (this.isBatteryPowered) {
+      const { flags: { broadcast }, to } = message;
+      if (broadcast && parseInt(to, 16) === HEARTBEAT_GROUP) {
+        this.eventNotify(new Event(this, 'Heartbeat'));
+      } else if (broadcast && parseInt(to, 16) === LOW_BATTERY_GROUP) {
+        this.eventNotify(new Event(this, 'LowBattery'));
+      }
     }
   }
 
