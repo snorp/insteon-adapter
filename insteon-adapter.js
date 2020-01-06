@@ -20,6 +20,7 @@ const InsteonAPIHandler = require('./insteon-api-handler');
 const { findCapabilities } = require('./insteon-capabilities');
 
 const ID_PREFIX = 'insteon-';
+const POLL_INTERVAL_MS = 60 * 60 * 1000;
 
 function getDataPath() {
   let profileDir;
@@ -291,6 +292,9 @@ class InsteonAdapter extends Adapter {
     this.apiHandler = new InsteonAPIHandler(addonManager, this);
 
     this.messenger.on('message', (message) => this._handleMessage(message));
+
+    // Poll devices periodically
+    setInterval(() => this.poll(), POLL_INTERVAL_MS);
   }
 
   get hub() {
@@ -299,6 +303,16 @@ class InsteonAdapter extends Adapter {
 
   get messenger() {
     return this.hub.messenger;
+  }
+
+  async poll() {
+    for (const device of Object.values(this.devices)) {
+      try {
+        await device.poll();
+      } catch (e) {
+        console.warn('Failed to poll ${device.id}', e);
+      }
+    }
   }
 
   _handleMessage(message) {
@@ -397,21 +411,28 @@ class InsteonAdapter extends Adapter {
     await this.hub.close();
   }
 
-  async link({ controller = true, timeout = 30000 } = {}) {
+  async link({ timeout = 30000 } = {}) {
     this.sendPairingPrompt('Press the \'set\' button on the device you would like to link.');
-    const info = await this.hub.link(null, { controller, timeout });
+    const info = await this.hub.link(null, { timeout });
     if (!info) {
-      console.log('No link information received.');
-      return;
+      console.warn('No link information received.');
+      return null;
     }
 
-    console.log(`Link Result, controller=${controller}`, info);
+    if (info.category === 0 && info.subcategory === 0) {
+      // We may have stored device information, so use that if able.
+      const storedInfo = await storage.getItem(info.address);
+      if (storedInfo) {
+        return storedInfo;
+      }
 
-    if (controller) {
-      // We don't get valid device category when controller=false
-      await storage.setItem(info.address, info);
+      console.warn('No category/subcategory received');
+      return null;
     }
 
+    console.log(`Link Result`, info);
+
+    await storage.setItem(info.address, info);
     return info;
   }
 
