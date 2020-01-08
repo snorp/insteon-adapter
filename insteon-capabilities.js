@@ -14,7 +14,10 @@ const CAPABILITIES = {
     default: ['OnOffSwitch'],
   },
   16: {
+    1: ['MotionSensor', 'BatteryPowered'],
+    2: ['DoorSensor', 'BatteryPowered'],
     17: ['DoorSensor', 'BatteryPowered'],
+    22: ['MotionSensor', 'BatteryPowered'],
   },
 };
 

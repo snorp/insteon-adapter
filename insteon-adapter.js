@@ -59,6 +59,29 @@ class InsteonProperty extends Property {
   }
 }
 
+class MotionProperty extends InsteonProperty {
+  constructor(device) {
+    super(device, 'motion', {
+      '@type': 'MotionProperty',
+      label: 'Motion',
+      name: 'motion',
+      type: 'boolean',
+      value: false,
+      readOnly: true,
+    });
+  }
+
+  handleMessage(message) {
+    const { cmd1 } = message;
+
+    if (cmd1 === MessageCommands.ON) {
+      this.setCachedValueAndNotify(true);
+    } else if (cmd1 === MessageCommands.OFF) {
+      this.setCachedValueAndNotify(false);
+    }
+  }
+}
+
 class OnOffProperty extends InsteonProperty {
   constructor(device, { readOnly = true } = {}) {
     super(device, 'on', {
@@ -242,6 +265,10 @@ class InsteonDevice extends Device {
 
     if (type.includes('DoorSensor')) {
       this.properties.set('open', new OpenProperty(this));
+    }
+
+    if (type.includes('MotionSensor')) {
+      this.properties.set('motion', new MotionProperty(this));
     }
 
     // Add events and actions for fast on/off
