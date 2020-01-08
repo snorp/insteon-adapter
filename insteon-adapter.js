@@ -302,6 +302,8 @@ class InsteonDevice extends Device {
         } else {
           await this.hub.turnOff(this.address, { duration });
         }
+
+        setTimeout(() => this.poll(), duration * 1000);
         break;
       }
       case 'Poll': {
