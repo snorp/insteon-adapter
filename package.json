@@ -29,7 +29,9 @@
     "eslint": "^6.4.0",
     "pre-commit": "^1.2.2"
   },
-  "pre-commit": [ "lint-nofix" ],
+  "pre-commit": [
+    "lint-nofix"
+  ],
   "files": [
     "LICENSE",
     "README.md",
@@ -58,7 +60,7 @@
   },
   "dependencies": {
     "delay": "^4.3.0",
-    "insteon-plm": "github:snorp/insteon-plm#955ff5b7445747a2f2e4f4d3de71d86bb28507c1",
+    "insteon-plm": "github:snorp/insteon-plm#51f88179154d39b16a33b8c078ad6aa05e013e2c",
     "mkdirp": "^0.5.1",
     "node-persist": "^3.0.5",
     "serialport": "^8.0.6"
