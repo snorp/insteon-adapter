@@ -209,6 +209,8 @@ class InsteonDevice extends Device {
     super(adapter, id);
     this.title = deviceDescription.name || deviceDescription.title;
     this.description = deviceDescription.description;
+    this.category = deviceDescription.category;
+    this.subcategory = deviceDescription.subcategory;
     this._address = idToAddress(id);
     const type = this['@type'] = deviceDescription['@type'] || [];
 
@@ -402,36 +404,42 @@ class InsteonAdapter extends Adapter {
     }
   }
 
-  async addDeviceByAddress(address, category, subcategory) {
+  createDeviceByAddress(address, category, subcategory) {
     const info = findProductInfo(category, subcategory);
     const name = (info && info.name) || 'INSTEON Device';
 
-    return this.addDevice(addressToId(address), {
+    return this.createDevice(addressToId(address), {
       title: `${name} [${address}]`,
       category,
       subcategory,
     });
   }
 
-  async addDevice(deviceId, deviceDescription) {
-    if (deviceId in this.devices) {
-      return this.devices[deviceId];
+  createDevice(deviceId, { title, category, subcategory }) {
+    const caps = findCapabilities(category, subcategory);
+    if (caps.length === 0) {
+      throw new Error(`Unsupported device: category=${category}, subcategory=${subcategory}`);
     }
 
-    const { category, subcategory } = deviceDescription;
-    if (Number.isInteger(category) && Number.isInteger(subcategory)) {
-      deviceDescription['@type'] = findCapabilities(category, subcategory);
+    return new InsteonDevice(this, deviceId, {
+      '@type': caps,
+      title,
+      category,
+      subcategory,
+    });
+  }
+
+  addDevice(device) {
+    if (device.id in this.devices) {
+      return this.devices[device.id];
     }
 
-    const device = new InsteonDevice(this, deviceId, deviceDescription);
-    this.devices[deviceId] = device;
+    this.devices[device.id] = device;
     this.handleDeviceAdded(device);
 
     device.poll().catch(() => {
       console.warn(`Failed initial poll of ${device.id}`);
     });
-
-    return device;
   }
 
   async removeDevice(deviceId) {
@@ -451,24 +459,32 @@ class InsteonAdapter extends Adapter {
     }
 
     const info = await storage.getItem(idToAddress(deviceId));
-    if (info) {
-      await this.addDevice(deviceId, {
-        title: device.title,
-        '@type': device['@type'],
-      });
+    if (!info) {
+      return;
+    }
+
+    const { category, subcategory } = info;
+    const newDevice = this.createDevice(deviceId, {
+      title: device.title,
+      category,
+      subcategory,
+    });
+
+    if (newDevice) {
+      this.addDevice(newDevice);
     }
   }
 
   async startPairing(timeoutSeconds) {
     super.startPairing(timeoutSeconds);
 
-    this.link({ timeout: timeoutSeconds * 1000 }).then(async (link) => {
-      if (link) {
-        const device = await this.addDeviceByAddress(link.address, link.category, link.subcategory);
-        this.sendPairingPrompt('Linked new device', null, device);
+    this.link({ timeout: timeoutSeconds * 1000 }).then(async (device) => {
+      if (device) {
+        this.addDevice(device);
       }
-    }, (err) => {
-      console.error('Linking failed', err);
+    }).catch((e) => {
+      console.error('Pairing failed', e);
+      this.sendPairingPrompt(`Pairing failed: ${e.message}`);
     });
   }
 
@@ -492,28 +508,47 @@ class InsteonAdapter extends Adapter {
   }
 
   async link({ timeout = 30000 } = {}) {
-    this.sendPairingPrompt('Press the \'set\' button on the device you would like to link.');
+    this.sendPairingPrompt('Press the \'set\' button on the device you would like to pair.');
     const info = await this.hub.link(null, { timeout });
     if (!info) {
       console.warn('No link information received.');
       return null;
     }
 
-    if (info.category === 0 && info.subcategory === 0) {
-      // We may have stored device information, so use that if able.
-      const storedInfo = await storage.getItem(info.address);
-      if (storedInfo) {
-        return storedInfo;
-      }
+    const existing = this.devices[addressToId(info.address)];
 
-      console.warn('No category/subcategory received');
-      return null;
+    if (!info.controller) {
+      if (existing) {
+        this.sendPairingPrompt('Paired existing device as responder', null, existing);
+        console.log('Paired device as responder', existing);
+        return existing;
+      } else {
+        this.sendPairingPrompt(`Paired device as responder: ${info.address}`);
+        console.log(`Paired device as responder: ${info.address}`);
+        return null;
+      }
     }
 
-    console.log(`Link Result`, info);
+    try {
+      const device = this.createDeviceByAddress(info.address, info.category, info.subcategory);
 
-    await storage.setItem(info.address, info);
-    return info;
+      if (!device['@type'].includes('BatteryPowered')) {
+        // For non-battery devices, also try to link as a responder. Not fatal if this fails.
+        try {
+          await this.hub.link(info.address, { controller: false });
+        } catch (e) {
+          console.warn('Unable to link device as responder', e);
+        }
+      }
+
+      await storage.setItem(info.address, info);
+      return device;
+    } catch (e) {
+      this.sendPairingPrompt(`Failed to pair: ${e.message}`);
+      console.error('Failed to pair device', e);
+    }
+
+    return null;
   }
 
   async scan() {
@@ -535,7 +570,8 @@ class InsteonAdapter extends Adapter {
         const info = await this.hub.productInfo(address);
         await storage.setItem(address, info);
 
-        const device = await this.addDeviceByAddress(address, info.category, info.subcategory);
+        const device = await this.createDeviceByAddress(address, info.category, info.subcategory);
+        this.addDevice(device);
         devices.push(device.asDict());
       } catch (e) {
         console.error(`Failed to add device ${address}`, e);
