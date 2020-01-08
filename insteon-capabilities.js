@@ -13,6 +13,10 @@ const CAPABILITIES = {
     // Toggle switches
     default: ['OnOffSwitch'],
   },
+  7: {
+    // IOLinc
+    0: ['OnOffSwitch'],
+  },
   16: {
     1: ['MotionSensor', 'BatteryPowered'],
     2: ['DoorSensor', 'BatteryPowered'],
