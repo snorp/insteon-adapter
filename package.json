@@ -6,7 +6,8 @@
   "author": "James Willcox <snorp@snorp.net>",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint --fix ."
+    "lint": "eslint --fix .",
+    "lint-nofix": "eslint ."
   },
   "keywords": [
     "mozilla",
@@ -25,8 +26,10 @@
   },
   "devDependencies": {
     "babel-eslint": "^10.0.3",
-    "eslint": "^6.4.0"
+    "eslint": "^6.4.0",
+    "pre-commit": "^1.2.2"
   },
+  "pre-commit": [ "lint-nofix" ],
   "files": [
     "LICENSE",
     "README.md",
