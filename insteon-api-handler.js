@@ -21,6 +21,24 @@ class InsteonAPIHandler extends APIHandler {
       case '/scan':
         result = await this.adapter.scan();
         break;
+      case '/setupHeartbeat': {
+        const device = this.adapter.devices[request.body.deviceId];
+        if (!device) {
+          return new APIResponse({ status: 404 });
+        }
+
+        result = await device.link({ controller: false, group: 4 });
+        break;
+      }
+      case '/setupLowBattery': {
+        const device = this.adapter.devices[request.body.deviceId];
+        if (!device) {
+          return new APIResponse({ status: 404 });
+        }
+
+        result = await device.link({ controller: false, group: 3 });
+        break;
+      }
       default:
         return new APIResponse({ status: 404 });
     }

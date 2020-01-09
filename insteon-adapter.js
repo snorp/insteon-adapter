@@ -347,6 +347,10 @@ class InsteonDevice extends Device {
     }
   }
 
+  async link({ controller, group = 1 }) {
+    return this.hub.link(this.address, { controller, group });
+  }
+
   get hub() {
     return this.adapter.hub;
   }
@@ -556,7 +560,6 @@ class InsteonAdapter extends Adapter {
 
     const addresses = new Set((await this.hub.links()).map((info) => info.address));
 
-    this.sendPairingPrompt(`Found ${addresses.size} devices. Adding things. This may take a while...`);
     console.log('Found addresses from database', addresses);
 
     const devices = [];
@@ -579,7 +582,6 @@ class InsteonAdapter extends Adapter {
     }
 
     console.log(`Added ${devices.length} devices from database`);
-    this.sendPairingPrompt(`Scan complete. Added ${devices.length} devices.`);
     return devices;
   }
 }
