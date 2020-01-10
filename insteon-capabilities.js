@@ -15,7 +15,7 @@ const CAPABILITIES = {
   },
   7: {
     // IOLinc
-    0: ['OnOffSwitch'],
+    0: ['OnOffSwitch', 'BinarySensor'],
   },
   16: {
     1: ['MotionSensor', 'BatteryPowered'],

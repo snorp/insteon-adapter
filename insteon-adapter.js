@@ -55,6 +55,13 @@ class InsteonProperty extends Property {
   handleMessage(_message) {
   }
 
+  async pollWithDelay(ms = 500) {
+    await delay(ms);
+    this.poll().catch((e) => {
+      console.warn(`Failed to poll ${this.device.address}: ${e.message}`);
+    });
+  }
+
   poll() {
   }
 }
@@ -95,7 +102,22 @@ class OnOffProperty extends InsteonProperty {
   }
 
   handleMessage(message) {
-    const { cmd1 } = message;
+    const { flags: { ack }, cmd1 } = message;
+
+    // Ignore ACKs. The `SettableOnOffProperty` updates the value
+    // after a successful set.
+    if (ack) {
+      return;
+    }
+
+    // The IOLinc sends the same message whether it was the relay or sensor
+    // that changed. This is problematic for us, but the relay message
+    // is only sent if someone pushes the button on the device itself.
+    // This should be a rare occurrence, so we'll treat on/off notifications
+    // as coming from the sensor and ignore them here.
+    if (this.device.isIOLinc && (cmd1 === MessageCommands.ON || cmd1 === MessageCommands.OFF)) {
+      return;
+    }
 
     if (cmd1 === MessageCommands.ON) {
       this.setCachedValueAndNotify(true);
@@ -128,7 +150,51 @@ class SettableOnOffProperty extends OnOffProperty {
       await this.hub.turnOff(this.device.address);
     }
 
+    this.setCachedValueAndNotify(value);
+
+    if (value && this.device.isIOLinc) {
+      // The IOLinc may be in a momentary mode, which means if we
+      // just turned it on, it may turn off in a bit. Poll for
+      // that change.
+      this.pollWithDelay(3000);
+    }
+
     return value;
+  }
+}
+
+class SensorProperty extends InsteonProperty {
+  constructor(device) {
+    super(device, 'active', {
+      '@type': 'BooleanProperty',
+      label: 'Sensor',
+      name: 'active',
+      type: 'boolean',
+      value: false,
+      readOnly: true,
+    });
+  }
+
+  handleMessage(message) {
+    const { flags: { ack }, cmd1 } = message;
+
+    if (ack) {
+      return;
+    }
+
+    // OFF means open, which seems weird.
+    if (cmd1 === MessageCommands.OFF) {
+      this.setCachedValueAndNotify(true);
+    } else if (cmd1 === MessageCommands.ON) {
+      this.setCachedValueAndNotify(false);
+    }
+  }
+
+  async poll() {
+    if (this.device.isIOLinc) {
+      const value = await this.hub.status(this.device.address, { cmd2: 1 });
+      this.setCachedValueAndNotify(value > 0);
+    }
   }
 }
 
@@ -154,13 +220,6 @@ class DimmerProperty extends InsteonProperty {
     } else if (cmd1 === MessageCommands.STOP_MANUAL_CHANGE) {
       this.poll();
     }
-  }
-
-  async pollWithDelay() {
-    await delay(500);
-    this.poll().catch((e) => {
-      console.warn(`Failed to poll ${this.device.address}: ${e.message}`);
-    });
   }
 
   async poll() {
@@ -273,6 +332,10 @@ class InsteonDevice extends Device {
       this.properties.set('motion', new MotionProperty(this));
     }
 
+    if (type.includes('BinarySensor')) {
+      this.properties.set('active', new SensorProperty(this));
+    }
+
     // Add events and actions for fast on/off
     if (isLight) {
       this.addEvent('FastOn', {
@@ -324,6 +387,10 @@ class InsteonDevice extends Device {
 
   get isBatteryPowered() {
     return this['@type'].includes('BatteryPowered');
+  }
+
+  get isIOLinc() {
+    return this.category === 7 && this.subcategory === 0;
   }
 
   async handleMessage(message) {
