@@ -523,7 +523,7 @@ class InsteonAdapter extends Adapter {
   }
 
   async handleDeviceSaved(deviceId, device) {
-    if (!deviceId.startsWith(ID_PREFIX)) {
+    if (!deviceId.startsWith(ID_PREFIX) || this.devices[deviceId]) {
       return;
     }
 
