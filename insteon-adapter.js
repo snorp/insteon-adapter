@@ -353,8 +353,6 @@ class InsteonDevice extends Device {
       this.addAction('Poll', {
         '@type': 'PollAction',
       });
-
-      this.poll();
     }
   }
 
