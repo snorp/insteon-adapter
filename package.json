@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "delay": "^4.3.0",
-    "insteon-plm": "github:snorp/insteon-plm#51f88179154d39b16a33b8c078ad6aa05e013e2c",
+    "insteon-plm": "github:snorp/insteon-plm#749c1b40b004608e8255b46e96fefa791ee610fc",
     "mkdirp": "^0.5.1",
     "node-persist": "^3.0.5",
     "serialport": "^8.0.6"
