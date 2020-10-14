@@ -25,8 +25,8 @@
     "url": "https://github.com/snorp/insteon-adapter/issues"
   },
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
-    "eslint": "^6.4.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.11.0",
     "pre-commit": "^1.2.2"
   },
   "pre-commit": [
@@ -59,10 +59,10 @@
     }
   },
   "dependencies": {
-    "delay": "^4.3.0",
+    "delay": "^4.4.0",
     "insteon-plm": "github:snorp/insteon-plm#749c1b40b004608e8255b46e96fefa791ee610fc",
-    "mkdirp": "^0.5.1",
-    "node-persist": "^3.0.5",
-    "serialport": "^8.0.6"
+    "mkdirp": "^1.0.4",
+    "node-persist": "^3.1.0",
+    "serialport": "^9.0.1"
   }
 }
