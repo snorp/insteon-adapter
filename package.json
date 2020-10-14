@@ -1,7 +1,7 @@
 {
   "name": "insteon-adapter",
   "display_name": "INSTEON",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "INSTEON adapter plugin for Mozilla WebThings Gateway",
   "author": "James Willcox <snorp@snorp.net>",
   "main": "index.js",
