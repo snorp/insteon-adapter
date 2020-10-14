@@ -24,7 +24,11 @@ const POLL_INTERVAL_MS = 60 * 60 * 1000;
 const HEARTBEAT_GROUP = 4;
 const LOW_BATTERY_GROUP = 3;
 
-function getDataPath() {
+function getDataPath(dataDir) {
+  if (dataDir) {
+    return path.join(dataDir, 'insteon');
+  }
+
   let profileDir;
   if (process.env.hasOwnProperty('MOZIOT_HOME')) {
     profileDir = process.env.MOZIOT_HOME;
@@ -430,7 +434,7 @@ class InsteonAdapter extends Adapter {
     super(addonManager, 'insteon', manifest.name);
     this.name = 'INSTEON';
 
-    const dataDir = getDataPath();
+    const dataDir = getDataPath(this.userProfile.dataDir);
     if (!fs.existsSync(dataDir)) {
       mkdirp.sync(dataDir, { mode: 0o755 });
     }
