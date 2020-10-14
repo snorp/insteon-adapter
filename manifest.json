@@ -1,6 +1,6 @@
 {
   "author": "James Willcox <snorp@snorp.net>",
-  "description": "INSTEON adapter add-on for Mozilla WebThings Gateway",
+  "description": "INSTEON adapter add-on for WebThings Gateway",
   "gateway_specific_settings": {
     "webthings": {
       "exec": "{nodeLoader} {path}",
