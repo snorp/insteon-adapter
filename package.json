@@ -44,18 +44,6 @@
     "views",
     "js"
   ],
-  "moziot": {
-    "api": {
-      "min": 2,
-      "max": 2
-    },
-    "enabled": false,
-    "plugin": true,
-    "exec": "{nodeLoader} {path}",
-    "config": {
-      "devicePath": "/dev/ttyUSB0"
-    }
-  },
   "dependencies": {
     "delay": "^4.4.0",
     "insteon-plm": "github:snorp/insteon-plm#749c1b40b004608e8255b46e96fefa791ee610fc",
