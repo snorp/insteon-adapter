@@ -16,7 +16,7 @@
   "manifest_version": 1,
   "name": "INSTEON",
   "short_name": "INSTEON",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "options": {
     "default": {
       "path": "/dev/ttyUSB0"
